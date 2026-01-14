@@ -1,0 +1,40 @@
+name: PR Labels
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  suggest-labels:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Suggest persona labels
+        run: |
+          echo "🏷️ Suggested labels based on changed files:"
+          
+          CORE_CHANGES=$(git diff --name-only origin/main... | grep -E "(^apps/|^packages/)" || true)
+          if [ -n "$CORE_CHANGES" ]; then
+            echo "- persona:core (application code changes)"
+          fi
+          
+          INFRA_CHANGES=$(git diff --name-only origin/main... | grep -E "(Dockerfile|docker-compose|nginx/)" || true)
+          if [ -n "$INFRA_CHANGES" ]; then
+            echo "- persona:infra (infrastructure changes)"
+          fi
+          
+          DOCS_CHANGES=$(git diff --name-only origin/main... | grep -E "(^docs/|README.md)" || true)
+          if [ -n "$DOCS_CHANGES" ]; then
+            echo "- persona:docs (documentation changes)"
+          fi
+          
+          echo ""
+          echo "Please add appropriate persona labels to the PR"
