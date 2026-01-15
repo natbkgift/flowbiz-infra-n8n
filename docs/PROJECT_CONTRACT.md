@@ -1,107 +1,21 @@
-# Project Contract
+# Project Contract (Phase 1)
 
-## Overview
-This document defines the core contract for FlowBiz template-based client services.
+**Scope:** Integration-only bridge per `docs/BLUEPRINT.md` Phase 1.
 
-## API Endpoints
+## Endpoints
+- POST `/v1/jobs` — Trigger job; validates `workflow_key` against `workflows/registry.json`; returns 202 with `job_id`, `status` (pending|running|success|failed|cancelled), `message`, `accepted_at`, `estimated_completion`.
+- POST `/v1/callbacks/n8n` — Receive n8n callback payload; logs and ack (200) only in Phase 1.
 
-### GET /healthz
-Health check endpoint for monitoring.
+## Registry
+- `workflows/registry.json` is the allowlist for `workflow_key`. Any unknown key must be rejected at request validation.
 
-**Response:**
-```json
-{
-  "status": "ok",
-  "service": "service-name",
-  "version": "0.1.0"
-}
-```
+## Security
+- HMAC signature validation for callbacks is required in production when `CALLBACK_SIGNING_SECRET` is set; in development it may be absent and requests are accepted with a warning.
 
-**Status Codes:**
-- `200 OK`: Service is healthy
+## Anti-Scope (Phase 1 exclusions)
+- No n8n API control (enable/disable workflows) yet.
+- No job status database or Redis state tracking yet.
+- No forwarding of callbacks to FlowBiz services yet (logging/ack only).
 
-### GET /v1/meta
-Service metadata endpoint.
-
-**Response:**
-```json
-{
-  "service": "service-name",
-  "environment": "dev|prod",
-  "version": "0.1.0",
-  "build_sha": "abc123"
-}
-```
-
-**Status Codes:**
-- `200 OK`: Metadata retrieved successfully
-
-## Environment Variables
-
-### Runtime Configuration (APP_*)
-- `APP_ENV`: Environment (dev|prod)
-- `APP_HOST`: Bind host (default: 127.0.0.1) ⚠️ MUST be localhost for VPS deployment
-- `APP_PORT`: Bind port (default: 8000)
-- `APP_LOG_LEVEL`: Logging level (default: info)
-
-### Metadata (FLOWBIZ_*)
-- `FLOWBIZ_SERVICE_NAME`: Service identifier
-- `FLOWBIZ_VERSION`: Semantic version
-- `FLOWBIZ_BUILD_SHA`: Git commit SHA
-
-## Docker
-
-### Ports
-- Internal: 8000 (FastAPI/Uvicorn, bound to 127.0.0.1)
-- External: Managed by system-level nginx (see ADR_SYSTEM_NGINX.md)
-
-⚠️ **IMPORTANT:** Services bind to localhost (127.0.0.1) only. Public access is handled by system-level nginx configured by infrastructure team.
-
-### Volumes
-- Development: Hot-reload enabled
-- Production: No volumes mounted
-
-## Testing Requirements
-
-All tests must be:
-- **Deterministic**: No flaky tests
-- **Isolated**: No network calls
-- **Fast**: Complete in seconds
-
-### Commands
-```bash
-ruff check .       # Linting
-pytest -q          # Tests
-```
-
-## Security Headers (Nginx)
-
-Production deployments include:
-- `X-Content-Type-Options: nosniff`
-- `X-Frame-Options: DENY`
-- `Referrer-Policy: strict-origin-when-cross-origin`
-- `Permissions-Policy: geolocation=(), microphone=(), camera=()`
-- `Strict-Transport-Security` (when SSL configured)
-
-## Scope Boundaries
-
-### ✅ In Scope
-- Standard health/meta endpoints
-- Docker containerization
-- Nginx reverse proxy
-- Environment configuration
-- Testing infrastructure
-
-### ❌ Out of Scope
-- Business logic endpoints
-- Authentication/Authorization
-- Database integration
-- Queue/Worker systems
-- UI/Frontend code
-- FlowBiz Core runtime
-
-## Versioning
-Follow semantic versioning (MAJOR.MINOR.PATCH):
-- **MAJOR**: Breaking API changes
-- **MINOR**: New features (backward compatible)
-- **PATCH**: Bug fixes
+## Testing & Linting
+- Required commands: `ruff check .` and `pytest`.

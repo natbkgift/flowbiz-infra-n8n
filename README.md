@@ -13,6 +13,19 @@
 
 [![CI](https://github.com/natbkgift/flowbiz-template-service/actions/workflows/ci.yml/badge.svg)](https://github.com/natbkgift/flowbiz-template-service/actions/workflows/ci.yml)
 
+## Critical Warnings
+- Codebase governed by [docs/BLUEPRINT.md](docs/BLUEPRINT.md) and [docs/CODEX_MASTER_PROMPT.md](docs/CODEX_MASTER_PROMPT.md).
+- NEVER commit secrets; use `.env.example` patterns only.
+- Follow Blueprint phases; keep PRs atomic and scoped.
+
+## Quickstart
+```bash
+python -m venv .venv
+source .venv/bin/activate  # or .venv\\Scripts\\activate on Windows
+pip install -e ".[dev]"
+pytest
+```
+
 Production-ready client service template for FlowBiz AI Core integration. This is a **template repository** designed for reuse across customer projects.
 
 ## 🎯 Purpose
