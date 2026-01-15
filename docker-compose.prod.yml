@@ -6,3 +6,16 @@ services:
       - APP_ENV=prod
     volumes: []
     restart: always
+  n8n:
+    environment:
+      - N8N_BASIC_AUTH_ACTIVE=true
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:?N8N_BASIC_AUTH_USER required}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:?N8N_BASIC_AUTH_PASSWORD required}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:?N8N_ENCRYPTION_KEY required}
+    volumes:
+      - n8n_data:/home/node/.n8n
+    restart: always
+  postgres:
+    restart: always
+  redis:
+    restart: always

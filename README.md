@@ -1,4 +1,4 @@
-# FlowBiz Template Service
+# FlowBiz Infra n8n
 
 > ⚠️ **CRITICAL: MANDATORY PRE-DEPLOYMENT READING**  
 > Before deploying this project to a shared FlowBiz VPS, you MUST read:  
@@ -11,7 +11,7 @@
 
 **Related:** See [natbkgift/flowbiz-ai-core](https://github.com/natbkgift/flowbiz-ai-core) for VPS infrastructure documentation.
 
-[![CI](https://github.com/natbkgift/flowbiz-template-service/actions/workflows/ci.yml/badge.svg)](https://github.com/natbkgift/flowbiz-template-service/actions/workflows/ci.yml)
+[![CI](https://github.com/natbkgift/flowbiz-infra-n8n/actions/workflows/ci.yml/badge.svg)](https://github.com/natbkgift/flowbiz-infra-n8n/actions/workflows/ci.yml)
 
 ## Critical Warnings
 - Codebase governed by [docs/BLUEPRINT.md](docs/BLUEPRINT.md) and [docs/CODEX_MASTER_PROMPT.md](docs/CODEX_MASTER_PROMPT.md).
@@ -47,15 +47,16 @@ This template provides:
 
 ```bash
 # Clone repository
-git clone https://github.com/natbkgift/flowbiz-template-service.git
-cd flowbiz-template-service
+git clone https://github.com/natbkgift/flowbiz-infra-n8n.git
+cd flowbiz-infra-n8n
 
-# Start services (binds to localhost:8000)
+# Start services (api + n8n + postgres + redis, all bound to localhost)
 docker compose up --build
 
 # Verify (note: localhost, not 0.0.0.0)
 curl http://127.0.0.1:8000/healthz
 curl http://127.0.0.1:8000/v1/meta
+curl http://127.0.0.1:5678/
 ```
 
 ### Local Python Development
@@ -77,6 +78,13 @@ pytest -q
 # Run linting
 ruff check .
 ```
+
+### Workflow Templates
+
+- `scripts/import-workflows.sh` pushes the JSON files under `workflows/templates/` into the running n8n instance via `docker compose run n8n`.
+- `scripts/export-workflows.sh` snapshots every workflow from the n8n instance back into `workflows/templates/exports/` for version control.
+
+Both scripts respect `STACK_CMD` (default `docker compose`) so you can target alternate compose binaries or contexts.
 
 ## 📋 API Endpoints
 
@@ -122,12 +130,21 @@ Copy `.env.example` to `.env` and configure:
 - `FLOWBIZ_VERSION`: Semantic version
 - `FLOWBIZ_BUILD_SHA`: Git commit SHA
 
+**n8n Integration**
+- `N8N_WEBHOOK_BASE_URL`: Internal URL the API uses to invoke workflows (default `http://n8n:5678/webhook` inside Compose).
+- `N8N_HOST` / `N8N_PORT` / `N8N_PROTOCOL`: Host binding for the n8n UI (default `127.0.0.1:5678`).
+- `N8N_BASIC_AUTH_*`: Enables optional UI basic auth for n8n in production.
+- `N8N_ENCRYPTION_KEY`: Required by n8n to encrypt credentials—set a unique value in production.
+- `N8N_DB_*`: Credentials used by both the n8n container and Postgres backing service.
+
 ## 🐳 Docker
 
 ### Development
 ```bash
 docker compose up --build
 ```
+
+This boots the FastAPI bridge, n8n, Postgres, and Redis on localhost-only bindings. Workflow templates located under `workflows/templates/` are mounted into the n8n container for the import/export scripts.
 
 ### Production
 ```bash
@@ -138,7 +155,7 @@ curl http://127.0.0.1:8000/healthz
 ```
 
 **⚠️ Important:** 
-- Service binds to `127.0.0.1` (localhost) only
+- Services bind to `127.0.0.1` (localhost) only—even n8n UI.
 - NO nginx included in docker-compose (managed by system-level nginx)
 - See [docs/ADR_SYSTEM_NGINX.md](docs/ADR_SYSTEM_NGINX.md) for architecture
 - Public HTTPS access configured by infrastructure team
@@ -201,7 +218,7 @@ Violations surface as warnings, not failures. Human judgment is final.
 ## 📦 Project Structure
 
 ```
-flowbiz-template-service/
+flowbiz-infra-n8n/
 ├── .github/              # CI/CD workflows and templates
 ├── apps/
 │   └── api/              # FastAPI application

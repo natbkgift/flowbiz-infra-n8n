@@ -5,17 +5,95 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    depends_on:
+      n8n:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8000:8000"
     environment:
-      - APP_ENV=dev
-      - APP_HOST=127.0.0.1
-      - APP_PORT=8000
-      - APP_LOG_LEVEL=info
-      - FLOWBIZ_SERVICE_NAME=flowbiz-template-service
-      - FLOWBIZ_VERSION=0.1.0
-      - FLOWBIZ_BUILD_SHA=local
+      - APP_ENV=${APP_ENV:-dev}
+      - APP_HOST=${APP_HOST:-127.0.0.1}
+      - APP_PORT=${APP_PORT:-8000}
+      - APP_LOG_LEVEL=${APP_LOG_LEVEL:-info}
+      - FLOWBIZ_SERVICE_NAME=${FLOWBIZ_SERVICE_NAME:-flowbiz-template-service}
+      - FLOWBIZ_VERSION=${FLOWBIZ_VERSION:-0.1.0}
+      - FLOWBIZ_BUILD_SHA=${FLOWBIZ_BUILD_SHA:-local}
+      - N8N_WEBHOOK_BASE_URL=${N8N_WEBHOOK_BASE_URL:-http://n8n:5678/webhook}
+      - JOBS_MAX_TIMEOUT_SECONDS=${JOBS_MAX_TIMEOUT_SECONDS:-300}
+      - JOBS_RATE_LIMIT_PER_MINUTE=${JOBS_RATE_LIMIT_PER_MINUTE:-60}
     volumes:
       - ./apps:/app/apps
       - ./packages:/app/packages
     restart: unless-stopped
+
+  n8n:
+    image: n8nio/n8n:1.57.1
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=${N8N_TIMEZONE:-UTC}
+      - N8N_HOST=${N8N_HOST:-127.0.0.1}
+      - N8N_PORT=${N8N_PORT:-5678}
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+      - WEBHOOK_URL=${N8N_WEBHOOK_URL:-http://127.0.0.1:5678/}
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER:-admin}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD:-changeme}
+      - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY:-local_encryption_key}
+      - DB_TYPE=postgresdb
+      - DB_POSTGRESDB_HOST=postgres
+      - DB_POSTGRESDB_PORT=5432
+      - DB_POSTGRESDB_DATABASE=${N8N_DB_NAME:-n8n}
+      - DB_POSTGRESDB_USER=${N8N_DB_USER:-n8n}
+      - DB_POSTGRESDB_PASSWORD=${N8N_DB_PASSWORD:-n8n}
+      - QUEUE_BULL_REDIS_HOST=redis
+      - QUEUE_BULL_REDIS_PORT=6379
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows/templates:/workflows/templates
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:5678/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_DB=${N8N_DB_NAME:-n8n}
+      - POSTGRES_USER=${N8N_DB_USER:-n8n}
+      - POSTGRES_PASSWORD=${N8N_DB_PASSWORD:-n8n}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${N8N_DB_USER:-n8n} -d ${N8N_DB_NAME:-n8n}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "60", "1", "--loglevel", "warning"]
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+volumes:
+  postgres_data:
+  redis_data:
+  n8n_data:
