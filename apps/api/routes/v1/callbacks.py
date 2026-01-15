@@ -22,7 +22,7 @@ def _compute_signature(secret: str, body: bytes) -> str:
     return hmac.new(secret.encode(), body, hashlib.sha256).hexdigest()
 
 
-def _verify_signature(body: bytes, provided: str | None, job_id: str) -> None:
+def _verify_signature(body: bytes, provided: str | None, job_id: str | None) -> None:
     """Validate callback signature when secret is configured."""
 
     if not settings.callback_signing_secret:
