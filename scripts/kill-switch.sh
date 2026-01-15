@@ -73,7 +73,7 @@ PY
       exit 2
     fi
 
-    curl -sS -X PATCH \
+    curl -fsS -X PATCH \
       -H "X-N8N-API-KEY: ${API_KEY}" \
       -H "Content-Type: application/json" \
       -d '{"active":false}' \
