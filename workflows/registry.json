@@ -1,10 +1,10 @@
 {
   "workflows": [
     {
-      "key": "example_workflow",
-      "name": "Example Workflow",
+      "key": "tiktok_live_helper",
+      "name": "TikTok Live Helper",
       "version": "0.1.0",
-      "description": "Pilot workflow placeholder for validation."
+      "description": "Pilot workflow to receive TikTok live events and emit structured callbacks."
     }
   ]
 }

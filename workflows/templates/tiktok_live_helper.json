@@ -1,0 +1,138 @@
+{
+  "name": "TikTok Live Helper",
+  "active": false,
+  "nodes": [
+    {
+      "id": "Webhook",
+      "name": "Webhook - TikTok Live Helper",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-240, 0],
+      "parameters": {
+        "path": "tiktok_live_helper",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "x-workflow-key",
+                "value": "tiktok_live_helper"
+              }
+            ]
+          }
+        }
+      },
+      "webhookId": "tiktok-live-helper-webhook"
+    },
+    {
+      "id": "PreparePayload",
+      "name": "Prepare Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [120, 0],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {
+              "name": "job_id",
+              "value": "={{$json.job_id}}"
+            },
+            {
+              "name": "client_id",
+              "value": "={{$json.client_id}}"
+            },
+            {
+              "name": "workflow_key",
+              "value": "={{$json.workflow_key}}"
+            },
+            {
+              "name": "status",
+              "value": "success"
+            },
+            {
+              "name": "message",
+              "value": "Template placeholder. Add TikTok logic before sending callbacks."
+            }
+          ],
+          "json": [
+            {
+              "name": "inputs",
+              "value": "={{$json.inputs || {}}}"
+            },
+            {
+              "name": "metadata",
+              "value": "={{$json.metadata || {}}}"
+            },
+            {
+              "name": "audit",
+              "value": "[{\"timestamp\":\"={{$now}}\",\"action\":\"workflow-received\",\"node_name\":\"webhook\",\"details\":{\"job_id\":\"={{$json.job_id}}\"},\"duration_ms\":0}]"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "Respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [520, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Cache-Control",
+                "value": "no-store"
+              },
+              {
+                "name": "X-Template",
+                "value": "tiktok_live_helper"
+              }
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - TikTok Live Helper": {
+      "main": [
+        [
+          {
+            "node": "Prepare Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Payload": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "id": "tiktok-live-helper-template",
+  "versionId": "00000000-0000-0000-0000-000000000000",
+  "meta": {
+    "template": true,
+    "notes": "Starter template for TikTok live helper workflows. Replace nodes to call TikTok APIs and forward callbacks via Bridge."
+  },
+  "tags": []
+}

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import json
 import hashlib
 import hmac
-from typing import Any
 
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import ValidationError
@@ -38,7 +36,10 @@ def _verify_signature(body: bytes, provided: str | None, job_id: str | None) -> 
             "callback signature missing",
             extra={"job_id": job_id, "status": None, "workflow_key": None, "client_id": None},
         )
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Missing callback signature")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Missing callback signature",
+        )
 
     expected = _compute_signature(settings.callback_signing_secret, body)
     if not hmac.compare_digest(provided, expected):
@@ -46,7 +47,10 @@ def _verify_signature(body: bytes, provided: str | None, job_id: str | None) -> 
             "callback signature invalid",
             extra={"job_id": job_id, "status": None, "workflow_key": None, "client_id": None},
         )
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid callback signature")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid callback signature",
+        )
 
 
 @router.post("/callbacks/n8n", status_code=status.HTTP_200_OK)
@@ -60,7 +64,10 @@ async def receive_callback(request: Request) -> dict[str, str]:
     try:
         callback = JobCallback.model_validate_json(raw_body)
     except ValidationError as exc:  # pragma: no cover - fastapi will surface detail
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid callback payload") from exc
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Invalid callback payload",
+        ) from exc
 
     logger.info(
         "callback received",
