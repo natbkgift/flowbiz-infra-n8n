@@ -19,6 +19,8 @@ class Settings(BaseSettings):
 
     # n8n Webhook
     n8n_webhook_base_url: str = "http://127.0.0.1:5678/webhook"
+    n8n_api_base_url: str = "http://127.0.0.1:5678/api/v1"
+    n8n_api_key: str | None = None
 
     # Jobs API limits
     jobs_max_timeout_seconds: int = 300

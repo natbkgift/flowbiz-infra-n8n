@@ -113,6 +113,20 @@ Service metadata endpoint.
 }
 ```
 
+### `POST /v1/jobs/{job_id}/cancel`
+Kill-switch endpoint that deactivates the target workflow in n8n.
+
+**Request Body:**
+```json
+{
+  "client_id": "client-abc",
+  "workflow_key": "tiktok_live_helper",
+  "reason": "ops kill-switch"
+}
+```
+
+Returns 200 with `status="cancelled"` when the workflow is deactivated. Requires `N8N_API_KEY` to be configured.
+
 ## 🔧 Configuration
 
 ### Environment Variables
@@ -132,6 +146,8 @@ Copy `.env.example` to `.env` and configure:
 
 **n8n Integration**
 - `N8N_WEBHOOK_BASE_URL`: Internal URL the API uses to invoke workflows (default `http://n8n:5678/webhook` inside Compose).
+- `N8N_API_BASE_URL`: Base URL for n8n management API (default `http://n8n:5678/api/v1`).
+- `N8N_API_KEY`: API key for n8n kill-switch calls (required for `/v1/jobs/{job_id}/cancel`).
 - `N8N_HOST` / `N8N_PORT` / `N8N_PROTOCOL`: Host binding for the n8n UI (default `127.0.0.1:5678`).
 - `N8N_BASIC_AUTH_*`: Enables optional UI basic auth for n8n in production.
 - `N8N_ENCRYPTION_KEY`: Required by n8n to encrypt credentials—set a unique value in production.
@@ -259,6 +275,18 @@ flowbiz-infra-n8n/
 - Queue/Worker systems
 - UI/Frontend code
 - FlowBiz Core runtime
+
+## 🔌 Kill-Switch Script
+
+Use `scripts/kill-switch.sh` for operational kill-switch actions.
+
+```bash
+# Deactivate a workflow by key (requires N8N_API_KEY)
+N8N_API_KEY=your-api-key ./scripts/kill-switch.sh deactivate tiktok_live_helper
+
+# Stop the n8n container via compose
+./scripts/kill-switch.sh stop
+```
 
 **See [AGENT_BEHAVIOR_LOCK.md](docs/AGENT_BEHAVIOR_LOCK.md) for complete rules.**
 
