@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from collections import defaultdict, deque
-from datetime import datetime, timezone
 import threading
 import time
+from collections import defaultdict, deque
+from datetime import datetime, timezone
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status

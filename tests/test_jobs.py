@@ -31,7 +31,7 @@ def test_jobs_accepts_known_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
     payload = {
         "job_id": "job-123",
         "client_id": "client-abc",
-        "workflow_key": "example_workflow",
+        "workflow_key": "tiktok_live_helper",
         "inputs": {"foo": "bar"},
         "callback_url": "https://example.com/callback",
     }
@@ -49,7 +49,9 @@ def test_jobs_accepts_known_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
     assert len(calls) == 1
 
 
-def test_jobs_dispatch_failure_logs(monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture) -> None:
+def test_jobs_dispatch_failure_logs(
+    monkeypatch: pytest.MonkeyPatch, caplog: pytest.LogCaptureFixture
+) -> None:
     class _AsyncClientFailure:
         def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - test helper
             pass
@@ -68,7 +70,7 @@ def test_jobs_dispatch_failure_logs(monkeypatch: pytest.MonkeyPatch, caplog: pyt
     payload = {
         "job_id": "job-456",
         "client_id": "client-xyz",
-        "workflow_key": "example_workflow",
+        "workflow_key": "tiktok_live_helper",
         "inputs": {"foo": "bar"},
         "callback_url": "https://example.com/callback",
     }
