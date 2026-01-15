@@ -20,9 +20,9 @@ class JobStatus(StrEnum):
 class JobRequest(BaseModel):
     """Inbound request payload for creating a job."""
 
-    job_id: str
-    client_id: str
-    workflow_key: str
+    job_id: str = Field(min_length=1)
+    client_id: str = Field(min_length=1)
+    workflow_key: str = Field(min_length=1)
     inputs: dict[str, Any]
     callback_url: HttpUrl
     priority: int = Field(default=5, ge=1, le=10)
