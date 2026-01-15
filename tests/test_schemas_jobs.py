@@ -21,7 +21,34 @@ def test_job_request_defaults() -> None:
     assert req.metadata == {}
 
 
-def test_job_request_priority_bounds() -> None:
+@pytest.mark.parametrize(
+    ("priority", "is_valid"),
+    [
+        (0, False),
+        (11, False),
+        (1, True),
+        (10, True),
+    ],
+)
+def test_job_request_priority_bounds(priority: int, is_valid: bool) -> None:
+    payload = {
+        "job_id": "job-123",
+        "client_id": "client-abc",
+        "workflow_key": "wf-key",
+        "inputs": {},
+        "callback_url": "https://example.com/callback",
+        "priority": priority,
+    }
+
+    if is_valid:
+        req = JobRequest(**payload)
+        assert req.priority == priority
+    else:
+        with pytest.raises(ValidationError):
+            JobRequest(**payload)
+
+
+def test_job_request_timeout_seconds_invalid() -> None:
     with pytest.raises(ValidationError):
         JobRequest(
             job_id="job-123",
@@ -29,7 +56,18 @@ def test_job_request_priority_bounds() -> None:
             workflow_key="wf-key",
             inputs={},
             callback_url="https://example.com/callback",
-            priority=0,
+            timeout_seconds=0,
+        )
+
+
+def test_job_request_id_fields_require_value() -> None:
+    with pytest.raises(ValidationError):
+        JobRequest(
+            job_id="",
+            client_id="client-abc",
+            workflow_key="wf-key",
+            inputs={},
+            callback_url="https://example.com/callback",
         )
 
 
