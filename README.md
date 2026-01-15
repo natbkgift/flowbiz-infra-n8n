@@ -1,4 +1,4 @@
-# FlowBiz Template Service
+# FlowBiz Infra n8n
 
 > ⚠️ **CRITICAL: MANDATORY PRE-DEPLOYMENT READING**  
 > Before deploying this project to a shared FlowBiz VPS, you MUST read:  
@@ -11,7 +11,7 @@
 
 **Related:** See [natbkgift/flowbiz-ai-core](https://github.com/natbkgift/flowbiz-ai-core) for VPS infrastructure documentation.
 
-[![CI](https://github.com/natbkgift/flowbiz-template-service/actions/workflows/ci.yml/badge.svg)](https://github.com/natbkgift/flowbiz-template-service/actions/workflows/ci.yml)
+[![CI](https://github.com/natbkgift/flowbiz-infra-n8n/actions/workflows/ci.yml/badge.svg)](https://github.com/natbkgift/flowbiz-infra-n8n/actions/workflows/ci.yml)
 
 ## Critical Warnings
 - Codebase governed by [docs/BLUEPRINT.md](docs/BLUEPRINT.md) and [docs/CODEX_MASTER_PROMPT.md](docs/CODEX_MASTER_PROMPT.md).
@@ -47,8 +47,8 @@ This template provides:
 
 ```bash
 # Clone repository
-git clone https://github.com/natbkgift/flowbiz-template-service.git
-cd flowbiz-template-service
+git clone https://github.com/natbkgift/flowbiz-infra-n8n.git
+cd flowbiz-infra-n8n
 
 # Start services (api + n8n + postgres + redis, all bound to localhost)
 docker compose up --build
@@ -218,7 +218,7 @@ Violations surface as warnings, not failures. Human judgment is final.
 ## 📦 Project Structure
 
 ```
-flowbiz-template-service/
+flowbiz-infra-n8n/
 ├── .github/              # CI/CD workflows and templates
 ├── apps/
 │   └── api/              # FastAPI application
