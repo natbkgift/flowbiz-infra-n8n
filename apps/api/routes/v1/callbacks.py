@@ -91,6 +91,7 @@ async def receive_callback(request: Request) -> dict[str, str]:
                 "client_id": None,
                 "workflow_key": None,
                 "status": callback.status,
+                "execution_id": callback.execution_id,
             },
             exc_info=exc,
         )
