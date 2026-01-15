@@ -6,6 +6,7 @@ import hmac
 from fastapi import APIRouter, HTTPException, Request, status
 from pydantic import ValidationError
 
+from packages.core.audit import persist_audit
 from packages.core.config import settings
 from packages.core.logging import get_logger
 from packages.core.schemas.callback import JobCallback
@@ -79,5 +80,23 @@ async def receive_callback(request: Request) -> dict[str, str]:
             "execution_id": callback.execution_id,
         },
     )
+
+    try:
+        persist_audit(callback)
+    except Exception as exc:  # pragma: no cover - defensive guard
+        logger.error(
+            "audit persistence failed",
+            extra={
+                "job_id": callback.job_id,
+                "client_id": None,
+                "workflow_key": None,
+                "status": callback.status,
+            },
+            exc_info=exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Audit persistence failed",
+        ) from exc
 
     return {"status": "ok"}

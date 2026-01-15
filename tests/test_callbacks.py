@@ -88,3 +88,37 @@ def test_callbacks_accepts_valid_signature(monkeypatch: Any) -> None:
 
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
+
+
+def test_callbacks_persist_audit_log(monkeypatch: Any, tmp_path: Any) -> None:
+    log_path = tmp_path / "audit.log"
+    monkeypatch.setattr(settings, "audit_log_path", str(log_path))
+
+    payload = {
+        "job_id": "job-5",
+        "status": "success",
+        "outputs": {"value": 7},
+        "audit": [
+            {
+                "timestamp": "2024-01-01T00:00:00Z",
+                "action": "run",
+                "node_name": "node-1",
+                "details": {"step": 1},
+                "duration_ms": 12,
+            }
+        ],
+        "execution_id": "exec-5",
+    }
+
+    with TestClient(app) as client:
+        response = client.post("/v1/callbacks/n8n", json=payload)
+
+    assert response.status_code == 200
+
+    contents = log_path.read_text(encoding="utf-8").splitlines()
+    assert len(contents) == 1
+
+    record = json.loads(contents[0])
+    assert record["job_id"] == payload["job_id"]
+    assert record["status"] == payload["status"]
+    assert record["audit"][0]["node_name"] == "node-1"
