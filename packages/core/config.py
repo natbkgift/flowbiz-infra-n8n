@@ -17,5 +17,8 @@ class Settings(BaseSettings):
     flowbiz_version: str = "0.1.0"
     flowbiz_build_sha: str = "local"
 
+    # n8n Webhook
+    n8n_webhook_base_url: str = "http://127.0.0.1:5678/webhook"
+
 
 settings = Settings()
