@@ -1,0 +1,111 @@
+{
+  "name": "Content Pipeline",
+  "active": false,
+  "nodes": [
+    {
+      "id": "Webhook",
+      "name": "Webhook - Content Pipeline",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [-240, 0],
+      "parameters": {
+        "path": "content_pipeline",
+        "httpMethod": "POST",
+        "responseMode": "lastNode",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "x-workflow-key",
+                "value": "content_pipeline"
+              }
+            ]
+          }
+        }
+      },
+      "webhookId": "content-pipeline-webhook"
+    },
+    {
+      "id": "NormalizePayload",
+      "name": "Normalize Payload",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 2,
+      "position": [80, 0],
+      "parameters": {
+        "keepOnlySet": true,
+        "values": {
+          "string": [
+            {"name": "job_id", "value": "={{$json.job_id}}"},
+            {"name": "client_id", "value": "={{$json.client_id}}"},
+            {"name": "workflow_key", "value": "={{$json.workflow_key}}"},
+            {"name": "status", "value": "success"},
+            {"name": "message", "value": "Template placeholder. Add content processing logic before sending callbacks."}
+          ],
+          "json": [
+            {"name": "inputs", "value": "={{$json.inputs || {}}}"},
+            {"name": "metadata", "value": "={{$json.metadata || {}}}"},
+            {
+              "name": "audit",
+              "value": "={{ [{'timestamp': $now.toISO(), 'action': 'workflow-received', 'node_name': 'webhook', 'details': {'job_id': $json.job_id}, 'duration_ms': 0}] }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "Respond",
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [460, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{$json}}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {"name": "Cache-Control", "value": "no-store"},
+              {"name": "X-Template", "value": "content_pipeline"}
+            ]
+          }
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Webhook - Content Pipeline": {
+      "main": [
+        [
+          {
+            "node": "Normalize Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize Payload": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {},
+  "id": "content-pipeline-template",
+  "versionId": "00000000-0000-0000-0000-000000000000",
+  "meta": {
+    "template": true,
+    "notes": "Starter template for a generic content pipeline. Replace nodes with real ingestion and processing before sending callbacks via Bridge."
+  },
+  "tags": []
+}

@@ -5,6 +5,12 @@
       "name": "TikTok Live Helper",
       "version": "0.1.0",
       "description": "Pilot workflow to receive TikTok live events and emit structured callbacks."
+    },
+    {
+      "key": "content_pipeline",
+      "name": "Content Pipeline",
+      "version": "0.1.0",
+      "description": "Template to ingest generic content payloads, normalize, and emit callbacks."
     }
   ]
 }
