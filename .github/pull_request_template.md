@@ -14,3 +14,4 @@
 - [ ] No secrets key-checked
 - [ ] `CODEX_PREFLIGHT.md` ran successfully
 - [ ] Contracts updated (if applicable)
+- [ ] Appropriate persona labels added

@@ -3,7 +3,7 @@
 **Scope:** Integration-only bridge per `docs/BLUEPRINT.md` Phase 1.
 
 ## Endpoints
-- POST `/v1/jobs` — Trigger job; validates `workflow_key` against `workflows/registry.json`; returns 202 with `job_id` and `status="pending"`.
+- POST `/v1/jobs` — Trigger job; validates `workflow_key` against `workflows/registry.json`; returns 202 with `job_id`, `status` (pending|running|success|failed|cancelled), `message`, `accepted_at`, `estimated_completion`.
 - POST `/v1/callbacks/n8n` — Receive n8n callback payload; logs and ack (200) only in Phase 1.
 
 ## Registry
