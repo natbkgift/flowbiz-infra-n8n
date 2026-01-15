@@ -45,7 +45,7 @@
             },
             {
               "name": "workflow_key",
-              "value": "tiktok_live_helper"
+              "value": "={{$json.workflow_key}}"
             },
             {
               "name": "status",
