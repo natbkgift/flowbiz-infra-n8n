@@ -6,7 +6,8 @@ services:
       context: .
       dockerfile: Dockerfile
     depends_on:
-      - n8n
+      n8n:
+        condition: service_healthy
     ports:
       - "127.0.0.1:8000:8000"
     environment:
@@ -28,8 +29,10 @@ services:
   n8n:
     image: n8nio/n8n:1.57.1
     depends_on:
-      - postgres
-      - redis
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     ports:
       - "127.0.0.1:5678:5678"
     environment:
@@ -54,6 +57,12 @@ services:
       - n8n_data:/home/node/.n8n
       - ./workflows/templates:/workflows/templates
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://127.0.0.1:5678/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
   postgres:
     image: postgres:15-alpine
@@ -64,6 +73,12 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${N8N_DB_USER:-n8n} -d ${N8N_DB_NAME:-n8n}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   redis:
     image: redis:7-alpine
@@ -71,6 +86,12 @@ services:
     volumes:
       - redis_data:/data
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
 
 volumes:
   postgres_data:
