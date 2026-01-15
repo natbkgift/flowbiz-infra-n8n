@@ -91,8 +91,8 @@ def test_callbacks_accepts_valid_signature(monkeypatch: Any) -> None:
 
 
 def test_callbacks_persist_audit_log(monkeypatch: Any, tmp_path: Any) -> None:
-    log_path = tmp_path / "audit.log"
-    monkeypatch.setattr(settings, "audit_log_path", str(log_path))
+    db_path = tmp_path / "audit.db"
+    monkeypatch.setattr(settings, "audit_db_path", str(db_path))
 
     payload = {
         "job_id": "job-5",
@@ -115,12 +115,17 @@ def test_callbacks_persist_audit_log(monkeypatch: Any, tmp_path: Any) -> None:
 
     assert response.status_code == 200
 
-    contents = log_path.read_text(encoding="utf-8").splitlines()
-    assert len(contents) == 1
+    import sqlite3
 
-    record = json.loads(contents[0])
+    conn = sqlite3.connect(db_path)
+    try:
+        rows = conn.execute("SELECT payload_json FROM audit_logs").fetchall()
+    finally:
+        conn.close()
+
+    assert len(rows) == 1
+    record = json.loads(rows[0][0])
     assert record["job_id"] == payload["job_id"]
     assert record["status"] == payload["status"]
     assert record["audit"][0]["node_name"] == "node-1"
-    assert "stored_at" in record
     assert "stored_at" in record

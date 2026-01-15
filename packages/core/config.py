@@ -27,8 +27,8 @@ class Settings(BaseSettings):
     # Callback verification
     callback_signing_secret: str | None = None
 
-    # Audit log persistence
-    audit_log_path: str = "data/audit.log"
+    # Audit log persistence (SQLite)
+    audit_db_path: str = "data/audit.db"
 
 
 settings = Settings()
