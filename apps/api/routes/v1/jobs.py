@@ -11,7 +11,13 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from packages.core.config import settings
 from packages.core.logging import get_logger
 from packages.core.registry import workflow_exists
-from packages.core.schemas.job import JobRequest, JobResponse, JobStatus
+from packages.core.schemas.job import (
+    JobCancelRequest,
+    JobCancelResponse,
+    JobRequest,
+    JobResponse,
+    JobStatus,
+)
 
 router = APIRouter(prefix="/v1")
 logger = get_logger(__name__)
@@ -26,6 +32,19 @@ def _job_log_extra(request: JobRequest, status: JobStatus) -> dict[str, object]:
         "job_id": request.job_id,
         "client_id": request.client_id,
         "workflow_key": request.workflow_key,
+        "status": status,
+    }
+
+
+def _cancel_log_extra(
+    job_id: str, payload: JobCancelRequest, status: JobStatus
+) -> dict[str, object]:
+    """Structured logging for cancel operations."""
+
+    return {
+        "job_id": job_id,
+        "client_id": payload.client_id,
+        "workflow_key": payload.workflow_key,
         "status": status,
     }
 
@@ -80,6 +99,118 @@ async def dispatch_to_n8n(request: JobRequest) -> None:
     except httpx.HTTPError as exc:
         logger.error("n8n dispatch failed", extra=_job_log_extra(request, JobStatus.PENDING))
         logger.debug("dispatch exception", exc_info=exc)
+
+
+@router.post(
+    "/jobs/{job_id}/cancel",
+    response_model=JobCancelResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def cancel_job(job_id: str, request: JobCancelRequest) -> JobCancelResponse:
+    """Deactivate the targeted workflow via n8n and mark the job cancelled."""
+
+    if not workflow_exists(request.workflow_key):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unknown workflow_key",
+        )
+
+    if not settings.n8n_api_key:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Kill-switch unavailable: N8N_API_KEY not configured",
+        )
+
+    deactivated = await deactivate_workflow(request.workflow_key)
+    if not deactivated:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Workflow not found in n8n",
+        )
+
+    response = JobCancelResponse(
+        job_id=job_id,
+        status=JobStatus.CANCELLED,
+        message="cancelled",
+        workflow_deactivated=True,
+    )
+
+    logger.info("job cancelled", extra=_cancel_log_extra(job_id, request, response.status))
+
+    return response
+
+
+async def deactivate_workflow(workflow_key: str) -> bool:
+    """Deactivate the matching workflow in n8n; returns True if deactivated."""
+
+    base_url = settings.n8n_api_base_url.rstrip("/")
+    headers = {"X-N8N-API-KEY": settings.n8n_api_key or ""}
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            list_response = await client.get(f"{base_url}/workflows", headers=headers)
+            list_response.raise_for_status()
+
+            payload = list_response.json()
+            workflows = payload.get("data") if isinstance(payload, dict) else payload
+            if not isinstance(workflows, list):
+                raise HTTPException(
+                    status_code=status.HTTP_502_BAD_GATEWAY,
+                    detail="Unexpected n8n response shape",
+                )
+
+            workflow_id = _find_workflow_id(workflow_key, workflows)
+            if not workflow_id:
+                return False
+
+            patch_response = await client.patch(
+                f"{base_url}/workflows/{workflow_id}",
+                headers=headers,
+                json={"active": False},
+            )
+            patch_response.raise_for_status()
+    except httpx.HTTPError as exc:
+        logger.error(
+            "n8n kill-switch call failed",
+            extra={
+                "job_id": None,
+                "client_id": None,
+                "workflow_key": workflow_key,
+                "status": JobStatus.CANCELLED,
+            },
+            exc_info=exc,
+        )
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail="Failed to deactivate workflow via n8n",
+        ) from exc
+
+    return True
+
+
+def _find_workflow_id(workflow_key: str, workflows: list[dict[str, object]]) -> str | None:
+    """Best-effort lookup to map registry key to n8n workflow id."""
+
+    target = workflow_key.strip().lower()
+
+    for workflow in workflows:
+        if not isinstance(workflow, dict):
+            continue
+
+        name = workflow.get("name") or workflow.get("displayName")
+        identifier = workflow.get("id")
+
+        slug = str(name).strip().lower().replace(" ", "_") if name else None
+
+        if (
+            name == workflow_key
+            or slug == target
+            or str(identifier) == workflow_key
+            or str(identifier).lower() == target
+        ):
+            return str(identifier)
+
+    return None
 
 
 def _rate_limit_exceeded(client_id: str) -> bool:

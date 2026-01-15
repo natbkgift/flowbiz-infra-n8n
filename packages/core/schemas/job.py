@@ -42,3 +42,24 @@ class JobResponse(BaseModel):
     estimated_completion: datetime | None = None
 
     model_config = dict(extra="forbid")
+
+
+class JobCancelRequest(BaseModel):
+    """Request payload to cancel a running workflow."""
+
+    client_id: str = Field(min_length=1)
+    workflow_key: str = Field(min_length=1)
+    reason: str | None = Field(default=None)
+
+    model_config = dict(extra="forbid")
+
+
+class JobCancelResponse(BaseModel):
+    """Acknowledgement for a job cancel request."""
+
+    job_id: str = Field(min_length=1)
+    status: JobStatus
+    message: str | None = None
+    workflow_deactivated: bool = False
+
+    model_config = dict(extra="forbid")
