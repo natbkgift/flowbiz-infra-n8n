@@ -46,7 +46,7 @@
             {"name": "metadata", "value": "={{$json.metadata || {}}}"},
             {
               "name": "audit",
-              "value": "[{\"timestamp\":\"={{$now}}\",\"action\":\"workflow-received\",\"node_name\":\"webhook\",\"details\":{\"job_id\":\"={{$json.job_id}}\"},\"duration_ms\":0}]"
+              "value": "={{ [{'timestamp': $now.toISO(), 'action': 'workflow-received', 'node_name': 'webhook', 'details': {'job_id': $json.job_id}, 'duration_ms': 0}] }}"
             }
           ]
         }
