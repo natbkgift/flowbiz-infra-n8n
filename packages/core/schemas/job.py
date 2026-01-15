@@ -35,7 +35,7 @@ class JobRequest(BaseModel):
 class JobResponse(BaseModel):
     """Synchronous acknowledgement for a job request."""
 
-    job_id: str
+    job_id: str = Field(min_length=1)
     status: JobStatus
     message: str | None = None
     accepted_at: datetime | None = None
