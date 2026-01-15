@@ -163,6 +163,45 @@ def test_cancel_deactivates_workflow(monkeypatch: pytest.MonkeyPatch) -> None:
     assert calls and calls[0]["payload"] == {"active": False}
 
 
+def test_cancel_matches_display_name_slug(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(settings, "n8n_api_key", "dummy-key")
+
+    class _AsyncClientDeactivate:
+        def __init__(self, *args: Any, **kwargs: Any) -> None:  # noqa: D401 - test helper
+            pass
+
+        async def __aenter__(self) -> "_AsyncClientDeactivate":
+            return self
+
+        async def __aexit__(self, *exc_info: object) -> None:
+            return None
+
+        async def get(self, url: str, **__: Any) -> httpx.Response:
+            request = httpx.Request("GET", url)
+            return httpx.Response(
+                status_code=200,
+                request=request,
+                json={"data": [{"id": 9, "displayName": "TikTok Live Helper", "active": True}]},
+            )
+
+        async def patch(self, url: str, **kwargs: Any) -> httpx.Response:
+            request = httpx.Request("PATCH", url)
+            return httpx.Response(status_code=200, request=request, json={"id": 9, "active": False})
+
+    monkeypatch.setattr(httpx, "AsyncClient", _AsyncClientDeactivate)
+
+    payload = {
+        "client_id": "client-321",
+        "workflow_key": "tiktok_live_helper",
+    }
+
+    with TestClient(app) as client:
+        response = client.post("/v1/jobs/job-111/cancel", json=payload)
+
+    assert response.status_code == 200
+    assert response.json()["workflow_deactivated"] is True
+
+
 def test_cancel_requires_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(settings, "n8n_api_key", None)
 

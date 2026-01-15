@@ -36,7 +36,9 @@ def _job_log_extra(request: JobRequest, status: JobStatus) -> dict[str, object]:
     }
 
 
-def _cancel_log_extra(job_id: str, payload: JobCancelRequest, status: JobStatus) -> dict[str, object]:
+def _cancel_log_extra(
+    job_id: str, payload: JobCancelRequest, status: JobStatus
+) -> dict[str, object]:
     """Structured logging for cancel operations."""
 
     return {
@@ -189,6 +191,8 @@ async def deactivate_workflow(workflow_key: str) -> bool:
 def _find_workflow_id(workflow_key: str, workflows: list[dict[str, object]]) -> str | None:
     """Best-effort lookup to map registry key to n8n workflow id."""
 
+    target = workflow_key.strip().lower()
+
     for workflow in workflows:
         if not isinstance(workflow, dict):
             continue
@@ -196,7 +200,14 @@ def _find_workflow_id(workflow_key: str, workflows: list[dict[str, object]]) -> 
         name = workflow.get("name") or workflow.get("displayName")
         identifier = workflow.get("id")
 
-        if name == workflow_key or str(identifier) == workflow_key:
+        slug = str(name).strip().lower().replace(" ", "_") if name else None
+
+        if (
+            name == workflow_key
+            or slug == target
+            or str(identifier) == workflow_key
+            or str(identifier).lower() == target
+        ):
             return str(identifier)
 
     return None

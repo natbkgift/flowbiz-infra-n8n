@@ -57,7 +57,10 @@ for item in items:
     if not isinstance(item, dict):
         continue
     name = item.get("name") or item.get("displayName")
-    if name == target or str(item.get("id")) == target:
+  slug = None
+  if isinstance(name, str):
+    slug = name.strip().lower().replace(" ", "_")
+  if name == target or slug == target or str(item.get("id")) == target:
         workflow_id = item.get("id")
         break
 
