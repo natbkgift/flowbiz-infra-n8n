@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from apps.api.routes import health
-from apps.api.routes.v1 import jobs, meta
+from apps.api.routes.v1 import callbacks, jobs, meta
 from packages.core.config import settings
 from packages.core.logging import setup_logging
 from packages.core.registry import get_registry
@@ -18,6 +18,7 @@ app = FastAPI(
 app.include_router(health.router)
 app.include_router(meta.router)
 app.include_router(jobs.router)
+app.include_router(callbacks.router)
 
 
 @app.on_event("startup")

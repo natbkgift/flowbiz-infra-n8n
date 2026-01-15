@@ -24,5 +24,8 @@ class Settings(BaseSettings):
     jobs_max_timeout_seconds: int = 300
     jobs_rate_limit_per_minute: int = 60
 
+    # Callback verification
+    callback_signing_secret: str | None = None
+
 
 settings = Settings()
