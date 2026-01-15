@@ -123,3 +123,4 @@ def test_callbacks_persist_audit_log(monkeypatch: Any, tmp_path: Any) -> None:
     assert record["status"] == payload["status"]
     assert record["audit"][0]["node_name"] == "node-1"
     assert "stored_at" in record
+    assert "stored_at" in record

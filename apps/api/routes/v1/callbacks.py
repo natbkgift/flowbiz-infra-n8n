@@ -82,7 +82,7 @@ async def receive_callback(request: Request) -> dict[str, str]:
     )
 
     try:
-        persist_audit(callback)
+        await persist_audit(callback)
     except Exception as exc:  # pragma: no cover - defensive guard
         logger.error(
             "audit persistence failed",

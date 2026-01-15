@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import asyncio
 import json
-import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -10,10 +10,15 @@ from packages.core.logging import get_logger
 from packages.core.schemas.callback import JobCallback
 
 logger = get_logger(__name__)
-_write_lock = threading.Lock()
+_write_lock = asyncio.Lock()
 
 
-def persist_audit(callback: JobCallback, log_path: Path | None = None) -> Path:
+def _write_line(target_path: Path, payload: str) -> None:
+    with target_path.open("a", encoding="utf-8") as fh:
+        fh.write(payload + "\n")
+
+
+async def persist_audit(callback: JobCallback, log_path: Path | None = None) -> Path:
     """Append the callback payload to an audit log as JSON lines."""
 
     target_path = Path(log_path or settings.audit_log_path)
@@ -26,9 +31,8 @@ def persist_audit(callback: JobCallback, log_path: Path | None = None) -> Path:
 
     payload = json.dumps(record, separators=(",", ":"), sort_keys=True)
 
-    with _write_lock:
-        with target_path.open("a", encoding="utf-8") as fh:
-            fh.write(payload + "\n")
+    async with _write_lock:
+        await asyncio.to_thread(_write_line, target_path, payload)
 
     logger.info(
         "audit persisted",
