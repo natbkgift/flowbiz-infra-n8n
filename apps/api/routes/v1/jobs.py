@@ -14,6 +14,17 @@ router = APIRouter(prefix="/v1")
 logger = get_logger(__name__)
 
 
+def _job_log_extra(request: JobRequest, status: JobStatus) -> dict[str, object]:
+    """Structured logging payload shared by handlers."""
+
+    return {
+        "job_id": request.job_id,
+        "client_id": request.client_id,
+        "workflow_key": request.workflow_key,
+        "status": status,
+    }
+
+
 @router.post("/jobs", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
 async def create_job(request: JobRequest, background_tasks: BackgroundTasks) -> JobResponse:
     """Accept a job request, validate workflow, and dispatch asynchronously."""
@@ -34,15 +45,7 @@ async def create_job(request: JobRequest, background_tasks: BackgroundTasks) -> 
 
     background_tasks.add_task(dispatch_to_n8n, request)
 
-    logger.info(
-        "job accepted",
-        extra={
-            "job_id": request.job_id,
-            "client_id": request.client_id,
-            "workflow_key": request.workflow_key,
-            "status": response.status,
-        },
-    )
+    logger.info("job accepted", extra=_job_log_extra(request, response.status))
 
     return response
 
@@ -58,13 +61,5 @@ async def dispatch_to_n8n(request: JobRequest) -> None:
             response = await client.post(webhook_url, json=payload)
             response.raise_for_status()
     except httpx.HTTPError as exc:
-        logger.error(
-            "n8n dispatch failed",
-            extra={
-                "job_id": request.job_id,
-                "client_id": request.client_id,
-                "workflow_key": request.workflow_key,
-                "status": JobStatus.PENDING,
-            },
-        )
+        logger.error("n8n dispatch failed", extra=_job_log_extra(request, JobStatus.PENDING))
         logger.debug("dispatch exception", exc_info=exc)

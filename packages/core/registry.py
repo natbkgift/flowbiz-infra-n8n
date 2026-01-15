@@ -43,8 +43,15 @@ def get_registry() -> WorkflowRegistry:
     return _load_registry()
 
 
+@lru_cache
+def get_workflow_keys() -> set[str]:
+    """Return cached set of workflow keys for O(1) lookups."""
+
+    registry = get_registry()
+    return {entry.key for entry in registry.workflows}
+
+
 def workflow_exists(workflow_key: str) -> bool:
     """Return True if workflow_key is present in the registry."""
 
-    registry = get_registry()
-    return any(entry.key == workflow_key for entry in registry.workflows)
+    return workflow_key in get_workflow_keys()
