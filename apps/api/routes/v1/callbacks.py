@@ -55,12 +55,12 @@ async def receive_callback(request: Request) -> dict[str, str]:
 
     raw_body = await request.body()
 
+    _verify_signature(raw_body, request.headers.get(_SIGNATURE_HEADER), job_id=None)
+
     try:
         callback = JobCallback.model_validate_json(raw_body)
     except ValidationError as exc:  # pragma: no cover - fastapi will surface detail
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail="Invalid callback payload") from exc
-
-    _verify_signature(raw_body, request.headers.get(_SIGNATURE_HEADER), callback.job_id)
 
     logger.info(
         "callback received",
