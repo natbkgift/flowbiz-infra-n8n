@@ -18,8 +18,8 @@ class AuditEntry(BaseModel):
     """Per-node audit trace for a workflow execution."""
 
     timestamp: datetime
-    action: str
-    node_name: str
+    action: str = Field(min_length=1)
+    node_name: str = Field(min_length=1)
     details: dict[str, Any] = Field(default_factory=dict)
     duration_ms: int = Field(default=0, ge=0)
 
