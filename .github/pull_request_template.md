@@ -1,20 +1,16 @@
-## Summary
-<!-- Describe what this PR does and why -->
+## Type
+- [ ] Feat
+- [ ] Fix
+- [ ] Docs
+- [ ] Infra
+- [ ] Chore
 
-## Testing
-<!-- Describe how this was tested -->
-- [ ] Tested locally with `docker compose up`
-- [ ] All tests pass (`pytest -q`)
-- [ ] Linting passes (`ruff check .`)
+## Context
+- Blueprint Phase/PR: 
+- Summary:
 
 ## Checklist
-- [ ] Changes are within scope
-- [ ] Documentation updated (if applicable)
-- [ ] No security vulnerabilities introduced
-- [ ] Appropriate persona labels added (persona:core|infra|docs)
-
-## Pre-flight
-<!-- Reference docs/CODEX_PREFLIGHT.md for complete checklist -->
-- [ ] API contracts maintained
-- [ ] Environment conventions followed
-- [ ] No scope creep
+- [ ] Tests added/updated
+- [ ] No secrets key-checked
+- [ ] `CODEX_PREFLIGHT.md` ran successfully
+- [ ] Contracts updated (if applicable)
