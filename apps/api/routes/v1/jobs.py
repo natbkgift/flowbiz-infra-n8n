@@ -55,7 +55,8 @@ async def dispatch_to_n8n(request: JobRequest) -> None:
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
-            await client.post(webhook_url, json=payload)
+            response = await client.post(webhook_url, json=payload)
+            response.raise_for_status()
     except Exception as exc:  # noqa: BLE001 - log and continue
         logger.error(
             "n8n dispatch failed",
