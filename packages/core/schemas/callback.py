@@ -29,7 +29,7 @@ class AuditEntry(BaseModel):
 class JobCallback(BaseModel):
     """Callback payload posted by n8n."""
 
-    job_id: str
+    job_id: str = Field(min_length=1)
     status: CallbackStatus
     outputs: dict[str, Any] = Field(default_factory=dict)
     error_code: str | None = None
