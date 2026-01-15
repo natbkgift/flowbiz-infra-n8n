@@ -8,7 +8,7 @@ class Settings(BaseSettings):
 
     # Runtime Configuration (APP_*)
     app_env: str = "dev"
-    app_host: str = "0.0.0.0"
+    app_host: str = "127.0.0.1"
     app_port: int = 8000
     app_log_level: str = "info"
 
@@ -16,6 +16,13 @@ class Settings(BaseSettings):
     flowbiz_service_name: str = "flowbiz-template-service"
     flowbiz_version: str = "0.1.0"
     flowbiz_build_sha: str = "local"
+
+    # n8n Webhook
+    n8n_webhook_base_url: str = "http://127.0.0.1:5678/webhook"
+
+    # Jobs API limits
+    jobs_max_timeout_seconds: int = 300
+    jobs_rate_limit_per_minute: int = 60
 
 
 settings = Settings()

@@ -1,0 +1,10 @@
+{
+  "workflows": [
+    {
+      "key": "example_workflow",
+      "name": "Example Workflow",
+      "version": "0.1.0",
+      "description": "Pilot workflow placeholder for validation."
+    }
+  ]
+}
