@@ -10,7 +10,8 @@ RUN pip install --no-cache-dir \
     fastapi>=0.104.0 \
     uvicorn[standard]>=0.24.0 \
     pydantic>=2.4.0 \
-    pydantic-settings>=2.0.0
+    pydantic-settings>=2.0.0 \
+    httpx>=0.25.0
 
 # Copy application code
 COPY apps/ ./apps/
@@ -25,4 +26,4 @@ EXPOSE 8000
 
 # Run the application
 # Use environment variables for host and port configuration
-CMD uvicorn apps.api.main:app --host ${APP_HOST:-0.0.0.0} --port ${APP_PORT:-8000}
+CMD uvicorn apps.api.main:app --host ${APP_HOST:-127.0.0.1} --port ${APP_PORT:-8000}

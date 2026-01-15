@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from collections import defaultdict, deque
 from datetime import datetime, timezone
+import threading
+import time
 
 import httpx
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
@@ -12,6 +15,8 @@ from packages.core.schemas.job import JobRequest, JobResponse, JobStatus
 
 router = APIRouter(prefix="/v1")
 logger = get_logger(__name__)
+_rate_limit_lock = threading.Lock()
+_rate_limit_hits: dict[str, deque[float]] = defaultdict(deque)
 
 
 def _job_log_extra(request: JobRequest, status: JobStatus) -> dict[str, object]:
@@ -28,6 +33,18 @@ def _job_log_extra(request: JobRequest, status: JobStatus) -> dict[str, object]:
 @router.post("/jobs", response_model=JobResponse, status_code=status.HTTP_202_ACCEPTED)
 async def create_job(request: JobRequest, background_tasks: BackgroundTasks) -> JobResponse:
     """Accept a job request, validate workflow, and dispatch asynchronously."""
+
+    if request.timeout_seconds > settings.jobs_max_timeout_seconds:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="timeout_seconds exceeds maximum allowed",
+        )
+
+    if _rate_limit_exceeded(request.client_id):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail="Rate limit exceeded",
+        )
 
     if not workflow_exists(request.workflow_key):
         raise HTTPException(
@@ -54,7 +71,7 @@ async def dispatch_to_n8n(request: JobRequest) -> None:
     """Fire-and-forget call to n8n webhook; failures are logged."""
 
     webhook_url = f"{settings.n8n_webhook_base_url.rstrip('/')}/{request.workflow_key}"
-    payload = request.model_dump()
+    payload = request.model_dump(mode="json")
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -63,3 +80,24 @@ async def dispatch_to_n8n(request: JobRequest) -> None:
     except httpx.HTTPError as exc:
         logger.error("n8n dispatch failed", extra=_job_log_extra(request, JobStatus.PENDING))
         logger.debug("dispatch exception", exc_info=exc)
+
+
+def _rate_limit_exceeded(client_id: str) -> bool:
+    """Return True if the client exceeds the per-minute limit."""
+
+    limit = settings.jobs_rate_limit_per_minute
+    if limit <= 0:
+        return False
+
+    now = time.monotonic()
+    window_start = now - 60.0
+
+    with _rate_limit_lock:
+        hits = _rate_limit_hits[client_id]
+        while hits and hits[0] < window_start:
+            hits.popleft()
+        if len(hits) >= limit:
+            return True
+        hits.append(now)
+
+    return False
